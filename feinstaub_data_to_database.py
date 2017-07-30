@@ -167,6 +167,16 @@ def insert_fn_in_db(db_fn, db_table, data_file_name, cnt_lines, cnt, cnt_ok, cnt
         ret_val = conn.execute(sql)
 
 
+def check_all_values_ok(ele):
+    "Sind alle Werte != None? (Manchmal fehlt zB esp8266id)"
+    # print dir(ele)
+    for property, value in vars(ele).iteritems():
+        # print property, ": ", value
+        if not value:
+            return False
+    return True
+
+
 def insert_data_in_db(table, db_fn, db_table, data_file_name):
     cnt = 0; cnt_ok = 0 ; cnt_fail = 0
     with sqlite3.connect(db_fn) as conn:
@@ -263,16 +273,6 @@ def adjust_feinstaub_logfiles(feinstaub_dir):
         print log_file_name
         print org_log_file_name
         print tmp_log_file_name
-
-
-def check_all_values_ok(ele):
-    "Sind alle Werte != None? (Manchmal fehlt zB esp8266id)"
-    # print dir(ele)
-    for property, value in vars(ele).iteritems():
-        # print property, ": ", value
-        if not value:
-            return False
-    return True
 
 
 # https://stackoverflow.com/questions/1373164/how-do-i-create-a-variable-number-of-variables
