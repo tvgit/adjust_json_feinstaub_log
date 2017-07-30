@@ -19,10 +19,8 @@ import sqlite3
 import time
 import csv
 from operator import itemgetter, attrgetter, methodcaller
-from pprint import pprint
 import datetime
-# from datetime import datetime
-# import pandas as pd
+
 
 cnt_files = 0
 cnt_lines = 0
