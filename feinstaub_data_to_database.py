@@ -448,7 +448,7 @@ def process_all_json_data_files(feinstaub_dir, fn_db):
                     delete_fn_in_db(fn_db, 'saved_files', data_file_base_name)
                 insert_fn_in_db(fn_db, 'saved_files', data_file_base_name, cnt_lines, cnt, cnt_ok, cnt_fail)
             else:
-                msge = '>' + data_file_name + '<: yet inserted (' + insert_date + ')'
+                msge = '>' + data_file_name + '<: already inserted (' + insert_date + ')'
                 print msge; p_log_this(msge)
         else:
             p_utils.p_terminal_mssge_error('File not found: ' + data_file_name)
