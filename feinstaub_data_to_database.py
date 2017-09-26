@@ -99,7 +99,6 @@ def delete_fn_in_db(db_fn, db_table, data_file_name):
 
     with sqlite3.connect(db_fn) as conn:
         cursor = conn.execute(sql)
-        conn.commit
         return True
     print ' failed !!!'
     return False
@@ -452,62 +451,6 @@ def process_all_json_data_files(feinstaub_dir, fn_db):
             p_utils.p_terminal_mssge_error('File not found: ' + data_file_name)
 
 
-# def evaluate(arg):
-#     msge = 'Do something with: >' + str(arg) + '<'
-#     print msge
-#     p_log_this(msge)
-#
-#
-# def eval_confargs():
-#     p_log_this()
-#     # x_glbls.print_arg_ns()
-#     # eval cmd-line args and/or conf-file args (always read by ConfArgParser):
-#
-#     if confargs.fn_data_in == confargs.fn_data_in:
-#         evaluate(confargs.fn_data_in)
-#
-#     if confargs.fn_data_out == confargs.fn_data_out:
-#         evaluate(confargs.fn_data_out)
-#
-#     if confargs.dir == confargs.dir:
-#         evaluate(confargs.dir)
-#         # adjust_feinstaub_logfiles(confargs.dir)
-#
-#     if confargs.rrrr == confargs.rrrr:
-#         evaluate(confargs.rrrr)
-#
-
-# def inspire_some_file_operations():
-#     path = '.'
-#     res = p_utils.p_dir_return_paths_of_level(path ='.', level=1, do_log=False)
-#     # res = p_utils.p_dir_return_paths_of_level(path ='.', level=1, do_log=True)
-#     res = p_utils.p_dir_return_dirs_of_level(path ='.', level=1, do_log=False)
-#     res = p_utils.p_dir_return_files_of_level(path ='.', level=1, do_log=False)
-#     #
-#     #res = p_utils.p_dir_traverse_recursively(path ='.', do_log=True)
-#     res = p_utils.p_dir_traverse_recursively(path ='.', do_log=False)
-#     #
-#     # file open & close (is logged)
-#     fn = 'dummy_fn'
-#     if p_utils.p_file_exists (fn, print_message = False):
-#         f = p_utils.p_file_open(fn, mode = 'r')
-#         p_utils.p_file_close(f)
-#     else:
-#         pass
-#     #
-#     # dir make & subdir make (is logged)
-#     dir_name = 'dummy_dir'
-#     res_dir = p_utils.p_dir_make(dir_name)
-#     res_dir = p_utils.p_subdir_make(dir_name)
-#     #
-#     txt_line = ''
-#     #
-#     regex = p_utils.p_regex_path_unix()
-#     result = regex.search(txt_line)
-#     #
-#     regex = p_utils.p_regex_filename()
-#     result = regex.search(txt_line)
-#     return
 
 def main():
     p_log_this('begin')
@@ -520,7 +463,7 @@ def main():
     fn_db = os.path.normpath(fn_db)
 
     # make_new_db => Alte Datenbank wird gelöscht und neue db frisch angelegt
-    make_sqlite_db(fn_db, make_new_db = False)
+    make_sqlite_db(fn_db = fn_db, make_new_db = False)
 
     process_all_json_data_files(confargs.dir, fn_db)
 
