@@ -35,6 +35,7 @@ confargs = lib.x_glbls.arg_ns
 
 class Data(object):
     def __init__(self):
+        self.ip        = ''
         self.unix_time = ''
         self.esp8266id = ''
         self.software_version = ''
@@ -48,6 +49,7 @@ class Data(object):
         self.line_nr   = ''
 
     def data_print(self):
+        print self.ip,
         print self.unix_time,
         print self.esp8266id,
         print self.software_version,
@@ -169,11 +171,14 @@ def insert_fn_in_db(db_fn, db_table, data_file_name, cnt_lines, cnt, cnt_ok, cnt
 
 
 def check_all_values_ok(ele):
-    "Sind alle Werte != None? (Manchmal fehlt zB esp8266id)"
+    "Sind alle Werte != None? (Manchmal, d.h. bei den ersten Files, fehlt zB esp8266id)"
     # print dir(ele)
     for property, value in vars(ele).iteritems():
         # print property, ": ", value
         if not value:
+            # print property, ": ", value, "   ",
+            msge = str (property) + ": " + str (value) + " fehlt!  "
+            p_log_this(msge); print msge
             return False
     return True
 
@@ -184,6 +189,19 @@ def insert_data_in_db(table, db_fn, db_table, data_file_name):
         for ele in table:
             # print_data_ele(ele)
             cnt += 1    # counts line of (!) table (not of file)
+
+
+            # Dumme Korrektur: erst mit der File >20170605.log< werden sowohl ip-Adresse
+            # als auch esp8266id aufgezeichnet. Aber beide Daten werden zur späteren Identifikation der Sensoren
+            # benötigt. => bis zum 2017-06-05 also diese Daten substituieren.
+
+            limit = int(1496613625)
+#            if (int(ele.unix_time) <= limit) and (ele.ip == "192.168.2.102") and (ele.esp8266id is None):
+            if (int(ele.unix_time) <= limit) and (ele.esp8266id is None):
+                if (ele.ip  == "http://192.168.2.101"):
+                    ele.esp8266id = "2326588"
+                else:
+                    ele.esp8266id = "3912953"
 
             if check_all_values_ok(ele):
                 sql = "INSERT INTO " + db_table
@@ -347,13 +365,14 @@ def process_single_json_data_file(data_file_name):
                 json_data = json.loads(line)
                 json_tree = objectpath.Tree(json_data)
                 try:
+                    val_fetch_from_tree_sensor(ele, json_tree, 'ip', 'ip'),
                     # print json_tree.execute('$.datum')   # == query JSON string for item: >datum<
                     val_fetch_from_tree_sensor(ele, json_tree, 'time', 'unix_time'),
 
-                    # print 'software_version', json_tree.execute('$.daten.software_version')
-                    # print '$.daten.esp8266id', json_tree.execute('$.daten.esp8266id')
                     val_fetch_from_tree_sensor(ele, json_tree, 'daten.esp8266id', 'esp8266id'),
+                    # print '$.daten.esp8266id', json_tree.execute('$.daten.esp8266id')
                     val_fetch_from_tree_sensor(ele, json_tree, 'daten.software_version', 'software_version'),
+                    # print 'software_version', json_tree.execute('$.daten.software_version')
 
                     val_fetch_from_tree_sensor(ele, json_tree, 'datum', ''),
                     val_fetch_from_tree_sensor(ele, json_tree, 'zeit', 'uhrzeit'),
@@ -476,6 +495,7 @@ def main():
 
     # (make_new_db = True) => Alte Datenbank wird gelöscht und neue db frisch angelegt
     make_sqlite_db(fn_db = fn_db, make_new_db = False)
+    # make_sqlite_db(fn_db = fn_db, make_new_db = True)
     process_all_json_data_files(confargs.dir, fn_db)
 
     # inspire_some_file_operations()
