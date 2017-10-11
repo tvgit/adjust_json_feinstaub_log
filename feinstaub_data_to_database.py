@@ -37,6 +37,7 @@ class Data(object):
     def __init__(self):
         self.unix_time = ''
         self.esp8266id = ''
+        self.software_version = ''
         self.zeit      = ''
         self.datum     = ''
         self.uhrzeit   = ''
@@ -49,6 +50,7 @@ class Data(object):
     def data_print(self):
         print self.unix_time,
         print self.esp8266id,
+        print self.software_version,
         print self.zeit,
         print self.datum,
         print self.uhrzeit,
@@ -64,7 +66,7 @@ class Data(object):
 def create_table(fn_db):
     print 'Creating schema'
     with sqlite3.connect(fn_db) as conn:
-        schema = "CREATE TABLE fstb(unix_time INTEGER, esp8266id STRING," \
+        schema = "CREATE TABLE fstb(unix_time INTEGER, esp8266id STRING, software_version STRING," \
                  "zeit, datum, uhrzeit, humidity REAL, temperature REAL, SDS_P1 REAL, SDS_P2 REAL, line_number INTEGER, " \
                  "PRIMARY KEY(esp8266id, unix_time));"
         conn.executescript(schema)
@@ -351,6 +353,7 @@ def process_single_json_data_file(data_file_name):
                     # print 'software_version', json_tree.execute('$.daten.software_version')
                     # print '$.daten.esp8266id', json_tree.execute('$.daten.esp8266id')
                     val_fetch_from_tree_sensor(ele, json_tree, 'daten.esp8266id', 'esp8266id'),
+                    val_fetch_from_tree_sensor(ele, json_tree, 'daten.software_version', 'software_version'),
 
                     val_fetch_from_tree_sensor(ele, json_tree, 'datum', ''),
                     val_fetch_from_tree_sensor(ele, json_tree, 'zeit', 'uhrzeit'),
@@ -400,7 +403,16 @@ def process_single_json_data_file(data_file_name):
 
 
 def process_all_json_data_files(feinstaub_dir, fn_db):
-    # Macht aus JSON Files CSV-Files mit den Spalten der >class Data()<.
+    # Macht aus JSON Files eine große SQL-Tabelle.
+    # - für jede Data-File im Daten-Dir:
+    #   - für jede Zeile:
+    #     - transformiere die JSON-Struktur in eine Python-Liste
+    #     - hänge diese Liste an eine interne python-Tabelle
+    #   - wenn Data-File vollständig gelesen:
+    #     - wenn Daten dieser File noch nicht in SQL-Tabelle:
+    #       speichere sie in der SQL-Tabelle
+    # Kern ist die Format-Unwandlung JSON -> orthogonale aber nicht normierte SQL-Tabelle
+    #
     msge = 'Dir of JSON -Data files: >' + str(feinstaub_dir) + '<'
     p_log_this(msge)
     table = []
@@ -426,18 +438,19 @@ def process_all_json_data_files(feinstaub_dir, fn_db):
             # print ' len(table): ', len(table), ' nach tmp_table = sorted(table, ... )'
 
             # make new csv-file with identical fn but extension == 'csv':
-            fn_csv = ('.').join(data_file_name.split('.')[:-1]) + '.csv'
-            fn_csv = os.path.normpath(fn_csv)
+            # fn_csv = ('.').join(data_file_name.split('.')[:-1]) + '.csv'
+            # fn_csv = os.path.normpath(fn_csv)
             # print fn_csv
             # write_csv(table, fn_csv)
 
-            data_file_base_name =  os.path.basename(os.path.normpath(data_file_name))
-
+            data_file_base_name = os.path.basename(os.path.normpath(data_file_name))
+            # Sind die Daten schon in der sqlite-Tabelle? <=> insertdate != ''
             insert_date = check_fn_data_in_db(fn_db, 'saved_files', data_file_base_name, cnt_lines, cnt_ele)
 
             if not insert_date:
                 msge = '>' + data_file_name + '<: data will be inserted!'
                 print msge; p_log_this(msge)
+                # Hier und jetzt werden die Daten in die Tabelle geschrieben:
                 cnt, cnt_ok, cnt_fail = insert_data_in_db(table, fn_db, 'fstb', data_file_name)
                 if check_fn_in_db(fn_db, 'saved_files', data_file_base_name):
                     msge = "deleting: " + data_file_base_name +  " from: "  + fn_db
@@ -459,12 +472,10 @@ def main():
 
     # fn_db = r'C:\tmp\sqlite\feinstaub_0011.db'
     fn_db = r'feinstaub_0011.db'
-
     fn_db = os.path.normpath(fn_db)
 
-    # make_new_db => Alte Datenbank wird gelöscht und neue db frisch angelegt
+    # (make_new_db = True) => Alte Datenbank wird gelöscht und neue db frisch angelegt
     make_sqlite_db(fn_db = fn_db, make_new_db = False)
-
     process_all_json_data_files(confargs.dir, fn_db)
 
     # inspire_some_file_operations()
