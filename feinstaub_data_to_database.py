@@ -205,8 +205,10 @@ def insert_data_in_db(table, db_fn, db_table, data_file_name):
 
             if check_all_values_ok(ele):
                 sql = "INSERT INTO " + db_table
-                sql += " (unix_time, esp8266id, zeit, datum, uhrzeit, humidity, temperature, SDS_P1, SDS_P2, line_number)"
-                sql += " VALUES ('" + str(ele.unix_time) + "', '" + str(ele.esp8266id)
+                sql += " (unix_time, esp8266id, software_version," +\
+                          " zeit, datum, uhrzeit," + \
+                          " humidity, temperature, SDS_P1, SDS_P2, line_number)"
+                sql += " VALUES ('" + str(ele.unix_time) + "', '" + str(ele.esp8266id) + "', '" + str(ele.software_version)
                 sql += "', '" + ele.zeit + "', '" + ele.datum + "', '" + ele.uhrzeit
                 sql += "', '" + ele.humidity + "', '" + ele.temperature + "', '" + ele.SDS_P1 + "', '" + ele.SDS_P2
                 sql += "', '" + str(ele.line_nr) + "')"
