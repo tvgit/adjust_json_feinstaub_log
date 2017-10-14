@@ -353,7 +353,8 @@ def write_csv (table, fn_csv):
 
 
 def process_single_json_data_file(data_file_name):
-    table = []
+    # In >data_table< werden die Daten zwischengespeichert, bevor sie in die Datenbank geschrieben werden.
+    data_table = []
     cnt_line = 0 ; cnt_ele = 0 ; cnt_fail_01 = 0 ; cnt_fail_02 = 0
     mssge_01 = '' ; mssge_02 = ''
     with open(data_file_name, 'r') as f:
@@ -363,7 +364,7 @@ def process_single_json_data_file(data_file_name):
             ele = Data()
             # delete leading comma:
             if line[0] == ',': line = line[1:]
-            try:  # to transform JSON-Data to table
+            try:  # to transform JSON-Data to data_table
                 json_data = json.loads(line)
                 json_tree = objectpath.Tree(json_data)
                 try:
@@ -398,7 +399,7 @@ def process_single_json_data_file(data_file_name):
                     # print ele.zeit
 
                     ele.line_nr = cnt_line
-                    table.append(ele)
+                    data_table.append(ele)
                     cnt_ele += 1
                 except:
                     cnt_fail_01 += 1
@@ -418,9 +419,9 @@ def process_single_json_data_file(data_file_name):
     mssge = 'process_single_json_data_file: >' + data_file_name + '<; lines total:' + str(cnt_line)
     p_log_this(mssge); print mssge
     # cnt_line == lines in file;
-    # table    == table of ele (objects of type Data)
+    # data_table    == data_table of ele (objects of type Data)
     # cnt_ele   == cnt   of ele (objects of type Data)
-    return cnt_line, table, cnt_ele
+    return cnt_line, data_table, cnt_ele
 
 
 def process_all_json_data_files(feinstaub_dir, fn_db):
