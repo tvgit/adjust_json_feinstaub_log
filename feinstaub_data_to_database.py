@@ -39,6 +39,7 @@ class Data(object):
         self.unix_time = ''
         self.esp8266id = ''
         self.software_version = ''
+        self.sensordatavalues = ''
         self.zeit      = ''
         self.datum     = ''
         self.uhrzeit   = ''
@@ -53,6 +54,7 @@ class Data(object):
         print self.unix_time,
         print self.esp8266id,
         print self.software_version,
+        print self.sensordatavalues,
         print self.zeit,
         print self.datum,
         print self.uhrzeit,
@@ -65,13 +67,18 @@ class Data(object):
 
 # https://pymotw.com/2/sqlite3/
 
-def create_table(fn_db):
+def create_tables(fn_db):
     print 'Creating schema'
     with sqlite3.connect(fn_db) as conn:
         schema = "CREATE TABLE fstb(unix_time INTEGER, esp8266id STRING, software_version STRING," \
                  "zeit, datum, uhrzeit, humidity REAL, temperature REAL, SDS_P1 REAL, SDS_P2 REAL, line_number INTEGER, " \
                  "PRIMARY KEY(esp8266id, unix_time));"
         conn.executescript(schema)
+        #
+        schema = "CREATE TABLE fstb_JSON(unix_time INTEGER, esp8266id STRING, daten STRING," \
+                 "PRIMARY KEY(esp8266id, unix_time));"
+        conn.executescript(schema)
+        #
         schema = """
         CREATE TABLE saved_files(saved_file STRING PRIMARY KEY, unix_time INTEGER, date_time STRING, lines INTEGER, 
                  cnt INTEGER, cnt_ok INTEGER, cnt_fail INTEGER);"""
@@ -88,10 +95,10 @@ def make_sqlite_db(fn_db, make_new_db = False):
     p_log_this(msge)
 
     if not os.path.exists(fn_db) :
-        print 'create_table: >' + fn_db + '<'
+        print 'create_tables: >' + fn_db + '<'
         # conn = sqlite3.connect(fn_db)
         # conn.close()
-        create_table(fn_db)
+        create_tables(fn_db)
     # conn.close() # Not necessary because of 'with'
 
 
@@ -352,7 +359,7 @@ def write_csv (table, fn_csv):
         p_utils.p_terminal_mssge_error(fn_csv)
 
 
-def process_single_json_data_file(data_file_name):
+def transform_json_file_to_column_table(data_file_name):
     # In >data_table< werden die Daten zwischengespeichert, bevor sie in die Datenbank geschrieben werden.
     data_table = []
     cnt_line = 0 ; cnt_ele = 0 ; cnt_fail_01 = 0 ; cnt_fail_02 = 0
@@ -403,10 +410,10 @@ def process_single_json_data_file(data_file_name):
                     cnt_ele += 1
                 except:
                     cnt_fail_01 += 1
-                    mssge_01 = data_file_name + ': ' + line + str(cnt_fail_01) + ' ERROR process_single_json_data_file() ... val_fetch_*()'
+                    mssge_01 = data_file_name + ': ' + line + str(cnt_fail_01) + ' ERROR transform_json_file_to_column_table() ... val_fetch_*()'
             except:
                 cnt_fail_02 += 1
-                mssge_02 = data_file_name  + ': ' + line + str(cnt_fail_02) + ' ERROR process_single_json_data_file() ... json.loads()'
+                mssge_02 = data_file_name  + ': ' + line + str(cnt_fail_02) + ' ERROR transform_json_file_to_column_table() ... json.loads()'
 
     if mssge_01:
         p_utils.p_terminal_mssge_note_this(mssge_01)
@@ -416,7 +423,7 @@ def process_single_json_data_file(data_file_name):
         p_utils.p_terminal_mssge_note_this(mssge_02)
         p_log_this(mssge_02)
 
-    mssge = 'process_single_json_data_file: >' + data_file_name + '<; lines total:' + str(cnt_line)
+    mssge = 'transform_json_file_to_column_table: >' + data_file_name + '<; lines total:' + str(cnt_line)
     p_log_this(mssge); print mssge
     # cnt_line == lines in file;
     # data_table    == data_table of ele (objects of type Data)
@@ -452,7 +459,7 @@ def process_all_json_data_files(feinstaub_dir, fn_db):
             # cnt_line == lines in file;
             # table    == table of ele (objects of type Data)
             # cnt_ele  == cnt   of ele (objects of type Data)
-            cnt_lines, table, cnt_ele = process_single_json_data_file(data_file_name)
+            cnt_lines, table, cnt_ele = transform_json_file_to_column_table(data_file_name)
 
             # https://wiki.python.org/moin/HowTo/Sorting
             tmp_table = sorted(table, key=attrgetter('unix_time', 'esp8266id'))
@@ -492,13 +499,13 @@ def main():
     # eval_confargs()
     # adjust_feinstaub_logfiles(confargs.dir)
 
-    # fn_db = r'C:\tmp\sqlite\feinstaub_0011.db'
     fn_db = r'feinstaub_0011.db'
+    fn_db = r'C:\tmp\sqlite\feinstaub_0011.db'
     fn_db = os.path.normpath(fn_db)
 
     # (make_new_db = True) => Alte Datenbank wird gelöscht und neue db frisch angelegt
-    make_sqlite_db(fn_db = fn_db, make_new_db = False)
-    # make_sqlite_db(fn_db = fn_db, make_new_db = True)
+    #make_sqlite_db(fn_db = fn_db, make_new_db = False)
+    make_sqlite_db(fn_db = fn_db, make_new_db = True)
     process_all_json_data_files(confargs.dir, fn_db)
 
     # inspire_some_file_operations()
