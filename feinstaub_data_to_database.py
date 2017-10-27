@@ -256,9 +256,14 @@ def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
                 #  https://stackoverflow.com/questions/33432421/sqlite-json1-example-for-json-extract-set   !!!! Gutes Beispiel sqlite + JSON !!!!
                 #  !!!! Gutes Beispiel sqlite + JSON !!!!
 
+                # unix_time INTEGER, esp8266id STRING, sensordatavalues STRING, line_JSON STRING, line_nr INTEGER,
+
+                # https: // stackoverflow.com / questions / 4547274 / convert - a - python - dict - to - a - string - and -back
+                # dict to str json.dumps() and str to dict json.loads()
                 sql = "INSERT INTO " + db_table_JSON
-                sql += " (unix_time, esp8266id, line_JSON, line_nr)"
-                sql += " VALUES ('" + str(ele.unix_time) + "', '" + str(ele.esp8266id) + "', '" + ele.line_JSON + "', '" + str(ele.line_nr) + "')"
+                sql += " (unix_time, esp8266id, sensordatavalues , line_JSON, line_nr)"
+                sql += " VALUES ('" + str(ele.unix_time) + "', '" + str(ele.esp8266id) + "', '" + \
+                       json.dumps(ele.sensordatavalues) + "', '" + ele.line_JSON + "', '" + str(ele.line_nr) + "')"
                 # print sql
                 try:
                     ret_val = conn.execute(sql)
@@ -435,7 +440,7 @@ def transform_json_file_to_column_table(data_file_name):
                     # print 'software_version', json_tree.execute('$.daten.software_version')
                     val_fetch_from_tree_sensor(ele, json_tree, 'daten.sensordatavalues', 'sensordatavalues'),
                     # print 'sensordatavalues', json_tree.execute('$.daten.sensordatavalues')
-                    # print ele.sensordatavalues
+                    # print type(ele.sensordatavalues), ele.sensordatavalues
 
                     val_fetch_from_tree_sensor(ele, json_tree, 'datum', ''),
                     val_fetch_from_tree_sensor(ele, json_tree, 'zeit', 'uhrzeit'),
@@ -481,7 +486,7 @@ def transform_json_file_to_column_table(data_file_name):
     # cnt_line == lines in file;
     # data_table    == data_table of ele (objects of type Data)
     # cnt_ele   == cnt   of ele (objects of type Data)
-    return cnt_line, data_table, cnt_ele
+    return data_table, cnt_line, cnt_ele
 
 
 def process_all_json_data_files(feinstaub_dir, fn_db):
@@ -512,7 +517,7 @@ def process_all_json_data_files(feinstaub_dir, fn_db):
             # cnt_line == lines in file;
             # table    == table of ele (objects of type Data)
             # cnt_ele  == cnt   of ele (objects of type Data)
-            cnt_lines, table, cnt_ele = transform_json_file_to_column_table(data_file_name)
+            table, cnt_lines, cnt_ele = transform_json_file_to_column_table(data_file_name)
 
             # https://wiki.python.org/moin/HowTo/Sorting
             tmp_table = sorted(table, key=attrgetter('unix_time', 'esp8266id'))
