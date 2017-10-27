@@ -47,6 +47,7 @@ class Data(object):
         self.temperature = ''
         self.SDS_P1    = ''
         self.SDS_P2    = ''
+        self.line_JSON = ''   # original line from *.log file
         self.line_nr   = ''
 
     def data_print(self):
@@ -62,6 +63,7 @@ class Data(object):
         print self.temperature,
         print self.SDS_P1,
         print self.SDS_P2,
+        print self.line_JSON,
         print self.line_nr
 
 
@@ -71,11 +73,11 @@ def create_tables(fn_db):
     print 'Creating schema'
     with sqlite3.connect(fn_db) as conn:
         schema = "CREATE TABLE fstb(unix_time INTEGER, esp8266id STRING, software_version STRING," \
-                 "zeit, datum, uhrzeit, humidity REAL, temperature REAL, SDS_P1 REAL, SDS_P2 REAL, line_number INTEGER, " \
+                 "zeit, datum, uhrzeit, humidity REAL, temperature REAL, SDS_P1 REAL, SDS_P2 REAL, line_nr INTEGER, " \
                  "PRIMARY KEY(esp8266id, unix_time));"
         conn.executescript(schema)
         #
-        schema = "CREATE TABLE fstb_JSON(unix_time INTEGER, esp8266id STRING, daten STRING," \
+        schema = "CREATE TABLE fstb_JSON(unix_time INTEGER, esp8266id STRING, sensordatavalues STRING, line_JSON STRING, line_nr INTEGER, " \
                  "PRIMARY KEY(esp8266id, unix_time));"
         conn.executescript(schema)
         #
@@ -190,13 +192,12 @@ def check_all_values_ok(ele):
     return True
 
 
-def insert_data_in_db(table, db_fn, db_table, data_file_name):
+def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
     cnt = 0; cnt_ok = 0 ; cnt_fail = 0
     with sqlite3.connect(db_fn) as conn:
         for ele in table:
             # print_data_ele(ele)
             cnt += 1    # counts line of (!) table (not of file)
-
 
             # Dumme Korrektur: erst mit der File >20170605.log< werden sowohl ip-Adresse
             # als auch esp8266id aufgezeichnet. Aber beide Daten werden zur späteren Identifikation der Sensoren
@@ -214,7 +215,7 @@ def insert_data_in_db(table, db_fn, db_table, data_file_name):
                 sql = "INSERT INTO " + db_table
                 sql += " (unix_time, esp8266id, software_version," +\
                           " zeit, datum, uhrzeit," + \
-                          " humidity, temperature, SDS_P1, SDS_P2, line_number)"
+                          " humidity, temperature, SDS_P1, SDS_P2, line_nr)"
                 sql += " VALUES ('" + str(ele.unix_time) + "', '" + str(ele.esp8266id) + "', '" + str(ele.software_version)
                 sql += "', '" + ele.zeit + "', '" + ele.datum + "', '" + ele.uhrzeit
                 sql += "', '" + ele.humidity + "', '" + ele.temperature + "', '" + ele.SDS_P1 + "', '" + ele.SDS_P2
@@ -236,6 +237,47 @@ def insert_data_in_db(table, db_fn, db_table, data_file_name):
                     p_utils.p_terminal_mssge_note_this('SQL: >' + sql + '<')
                     cnt_fail += 1
                     # print sql, ret_val
+
+                ##################################################################################################
+# https://sqlite.org/json1.html
+# https://www.sqlite.org/json1.html
+# http://www.samadhiweb.com/blog/2016.04.24.sqlite.json.html
+# https://stackoverflow.com/questions/33432421/sqlite-json1-example-for-json-extract-set
+# https://nelsonslog.wordpress.com/2015/09/22/json1-a-sqlite-extension/
+# http://nbviewer.jupyter.org/gist/coleifer/f1fc90c7d4938c73951c
+# https://www.google.de/search?client=firefox-b&dcr=0&ei=W17yWbuRJJOja_mlougK&q=sqlite+JSON+windows&oq=sqlite+JSON+windows&gs_l=psy-ab.3..33i160k1l3.580486.585101.0.587404.8.8.0.0.0.0.268.860.6j1j1.8.0....0...1.1.64.psy-ab..0.8.857...0j0i22i30k1j33i21k1.0.BWIGYE5y43I
+# https://github.com/coleifer?tab=overview&from=2017-09-01&to=2017-09-30&utf8=%E2%9C%93
+# http://t3n.de/news/nodejs-package-lowdb-641330/
+# https://dba.stackexchange.com/questions/122198/is-it-possible-to-store-and-query-json-in-sqlite
+
+
+                # unix_time INTEGER, esp8266id STRING, daten STRING
+                #  !!!! Gutes Beispiel sqlite + JSON !!!!
+                #  https://stackoverflow.com/questions/33432421/sqlite-json1-example-for-json-extract-set   !!!! Gutes Beispiel sqlite + JSON !!!!
+                #  !!!! Gutes Beispiel sqlite + JSON !!!!
+
+                sql = "INSERT INTO " + db_table_JSON
+                sql += " (unix_time, esp8266id, line_JSON, line_nr)"
+                sql += " VALUES ('" + str(ele.unix_time) + "', '" + str(ele.esp8266id) + "', '" + ele.line_JSON + "', '" + str(ele.line_nr) + "')"
+                # print sql
+                try:
+                    ret_val = conn.execute(sql)
+                    if ret_val != -1:
+                        cnt_ok += 1
+                    else:
+                        mssge = data_file_name + ': INSERT failed (JSON) (1): line number:' + str(cnt)
+                        p_utils.p_terminal_mssge_note_this(mssge)
+                        mssge = 'conn.execute(sql) == -1: ' + sql
+                        p_utils.p_terminal_mssge_note_this(mssge)
+                        cnt_fail += 1
+                except:
+                    mssge = data_file_name + ': INSERT failed (JSON) (2): line number:' + str(cnt)
+                    p_utils.p_terminal_mssge_note_this(mssge)
+                    p_utils.p_terminal_mssge_note_this('SQL: >' + sql + '<')
+                    cnt_fail += 1
+                    # print sql, ret_val
+
+
             else:
                 mssge = data_file_name + ': line not inserted: table line number:' + str(cnt) + ' (Some val == None)'
                 p_utils.p_terminal_mssge_note_this(mssge)
@@ -360,7 +402,14 @@ def write_csv (table, fn_csv):
 
 
 def transform_json_file_to_column_table(data_file_name):
-    # In >data_table< werden die Daten zwischengespeichert, bevor sie in die Datenbank geschrieben werden.
+    # In die python >data_table< werden die Daten aus der *.log File zwischengespeichert
+    # Zwei Versionen:
+    #   Zum einen werden aus der JSON Zeile einzelne Werte extrahiert und in einer Spalte der Tabelle
+    # abgelegt (die später in der SQL-Tabelle >fstb< eine Tabellenspalte wird).
+    #   Zum anderen werden JSON-(Teil)-Strings der ursprünglichen JSON-Zeile in einer anderen Python-
+    # Tabelle abgelegt, die später in der sqlite-Tabelle  >fstb_JSON< mit Hilfe der JSON1-sqlite
+    # Erweiterung weiterverarbeitet werden können.
+
     data_table = []
     cnt_line = 0 ; cnt_ele = 0 ; cnt_fail_01 = 0 ; cnt_fail_02 = 0
     mssge_01 = '' ; mssge_02 = ''
@@ -369,6 +418,7 @@ def transform_json_file_to_column_table(data_file_name):
         for line in f:
             cnt_line += 1
             ele = Data()
+            ele.line_JSON = line.strip (",")
             # delete leading comma:
             if line[0] == ',': line = line[1:]
             try:  # to transform JSON-Data to data_table
@@ -383,6 +433,9 @@ def transform_json_file_to_column_table(data_file_name):
                     # print '$.daten.esp8266id', json_tree.execute('$.daten.esp8266id')
                     val_fetch_from_tree_sensor(ele, json_tree, 'daten.software_version', 'software_version'),
                     # print 'software_version', json_tree.execute('$.daten.software_version')
+                    val_fetch_from_tree_sensor(ele, json_tree, 'daten.sensordatavalues', 'sensordatavalues'),
+                    # print 'sensordatavalues', json_tree.execute('$.daten.sensordatavalues')
+                    # print ele.sensordatavalues
 
                     val_fetch_from_tree_sensor(ele, json_tree, 'datum', ''),
                     val_fetch_from_tree_sensor(ele, json_tree, 'zeit', 'uhrzeit'),
@@ -480,9 +533,11 @@ def process_all_json_data_files(feinstaub_dir, fn_db):
                 msge = '>' + data_file_name + '<: data will be inserted!'
                 print msge; p_log_this(msge)
                 # Hier und jetzt werden die Daten in die Tabelle geschrieben:
-                cnt, cnt_ok, cnt_fail = insert_data_in_db(table, fn_db, 'fstb', data_file_name)
+                cnt, cnt_ok, cnt_fail = insert_data_in_db(table, fn_db, 'fstb', 'fstb_JSON', data_file_name)
+                #
+                # Jetzt noch eintragen, dass die Daten aus der File >data_file_base_name< verarbeitet wurden:
                 if check_fn_in_db(fn_db, 'saved_files', data_file_base_name):
-                    msge = "deleting: " + data_file_base_name +  " from: "  + fn_db
+                    msge = "deleting: " + data_file_base_name + " from: " + fn_db
                     print msge; p_log_this(msge)
                     delete_fn_in_db(fn_db, 'saved_files', data_file_base_name)
                 insert_fn_in_db(fn_db, 'saved_files', data_file_base_name, cnt_lines, cnt, cnt_ok, cnt_fail)
