@@ -134,7 +134,7 @@ def check_fn_in_db(db_fn, db_table, data_file_name):
             date_time = row[0]
             print ' ok: ' + date_time
             return True
-    print ' failed -> '
+    print ' filename not in database:  -> '
     return False
 
 
@@ -207,9 +207,9 @@ def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
 #            if (int(ele.unix_time) <= limit) and (ele.ip == "192.168.2.102") and (ele.esp8266id is None):
             if (int(ele.unix_time) <= limit) and (ele.esp8266id is None):
                 if (ele.ip  == "http://192.168.2.101"):
-                    ele.esp8266id = "2326588"
-                else:
                     ele.esp8266id = "3912953"
+                else:
+                    ele.esp8266id = "2326588"
 
             if check_all_values_ok(ele):
                 sql = "INSERT INTO " + db_table
@@ -239,16 +239,16 @@ def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
                     # print sql, ret_val
 
                 ##################################################################################################
-# https://sqlite.org/json1.html
-# https://www.sqlite.org/json1.html
-# http://www.samadhiweb.com/blog/2016.04.24.sqlite.json.html
-# https://stackoverflow.com/questions/33432421/sqlite-json1-example-for-json-extract-set
-# https://nelsonslog.wordpress.com/2015/09/22/json1-a-sqlite-extension/
-# http://nbviewer.jupyter.org/gist/coleifer/f1fc90c7d4938c73951c
-# https://www.google.de/search?client=firefox-b&dcr=0&ei=W17yWbuRJJOja_mlougK&q=sqlite+JSON+windows&oq=sqlite+JSON+windows&gs_l=psy-ab.3..33i160k1l3.580486.585101.0.587404.8.8.0.0.0.0.268.860.6j1j1.8.0....0...1.1.64.psy-ab..0.8.857...0j0i22i30k1j33i21k1.0.BWIGYE5y43I
-# https://github.com/coleifer?tab=overview&from=2017-09-01&to=2017-09-30&utf8=%E2%9C%93
-# http://t3n.de/news/nodejs-package-lowdb-641330/
-# https://dba.stackexchange.com/questions/122198/is-it-possible-to-store-and-query-json-in-sqlite
+                # https://sqlite.org/json1.html
+                # https://www.sqlite.org/json1.html
+                # http://www.samadhiweb.com/blog/2016.04.24.sqlite.json.html
+                # https://stackoverflow.com/questions/33432421/sqlite-json1-example-for-json-extract-set
+                # https://nelsonslog.wordpress.com/2015/09/22/json1-a-sqlite-extension/
+                # http://nbviewer.jupyter.org/gist/coleifer/f1fc90c7d4938c73951c
+                # https://www.google.de/search?client=firefox-b&dcr=0&ei=W17yWbuRJJOja_mlougK&q=sqlite+JSON+windows&oq=sqlite+JSON+windows&gs_l=psy-ab.3..33i160k1l3.580486.585101.0.587404.8.8.0.0.0.0.268.860.6j1j1.8.0....0...1.1.64.psy-ab..0.8.857...0j0i22i30k1j33i21k1.0.BWIGYE5y43I
+                # https://github.com/coleifer?tab=overview&from=2017-09-01&to=2017-09-30&utf8=%E2%9C%93
+                # http://t3n.de/news/nodejs-package-lowdb-641330/
+                # https://dba.stackexchange.com/questions/122198/is-it-possible-to-store-and-query-json-in-sqlite
 
 
                 # unix_time INTEGER, esp8266id STRING, daten STRING
