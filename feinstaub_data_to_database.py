@@ -193,7 +193,9 @@ def check_all_values_ok(ele):
 
 
 def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
-    cnt = 0; cnt_ok = 0 ; cnt_fail = 0
+    cnt         = 0 ; cnt_value_fail = 0
+    cnt_ok      = 0 ; cnt_fail      = 0
+    cnt_JSON_ok = 0 ; cnt_JSON_fail = 0
     with sqlite3.connect(db_fn) as conn:
         for ele in table:
             # print_data_ele(ele)
@@ -202,14 +204,17 @@ def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
             # Dumme Korrektur: erst mit der File >20170605.log< werden sowohl ip-Adresse
             # als auch esp8266id aufgezeichnet. Aber beide Daten werden zur späteren Identifikation der Sensoren
             # benötigt. => bis zum 2017-06-05 also diese Daten substituieren.
+            #
+            # nb: Die Daten sind trotzdem falsch!
 
             limit = int(1496613625)
-#            if (int(ele.unix_time) <= limit) and (ele.ip == "192.168.2.102") and (ele.esp8266id is None):
+            # if (int(ele.unix_time) <= limit) and (ele.ip == "192.168.2.102") and (ele.esp8266id is None):
             if (int(ele.unix_time) <= limit) and (ele.esp8266id is None):
                 if (ele.ip  == "http://192.168.2.101"):
                     ele.esp8266id = "3912953"
                 else:
                     ele.esp8266id = "2326588"
+
 
             if check_all_values_ok(ele):
                 sql = "INSERT INTO " + db_table
@@ -268,25 +273,23 @@ def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
                 try:
                     ret_val = conn.execute(sql)
                     if ret_val != -1:
-                        cnt_ok += 1
+                        cnt_JSON_ok += 1
                     else:
                         mssge = data_file_name + ': INSERT failed (JSON) (1): line number:' + str(cnt)
                         p_utils.p_terminal_mssge_note_this(mssge)
                         mssge = 'conn.execute(sql) == -1: ' + sql
                         p_utils.p_terminal_mssge_note_this(mssge)
-                        cnt_fail += 1
+                        cnt_JSON_fail += 1
                 except:
                     mssge = data_file_name + ': INSERT failed (JSON) (2): line number:' + str(cnt)
                     p_utils.p_terminal_mssge_note_this(mssge)
                     p_utils.p_terminal_mssge_note_this('SQL: >' + sql + '<')
-                    cnt_fail += 1
+                    cnt_JSON_fail += 1
                     # print sql, ret_val
-
-
             else:
                 mssge = data_file_name + ': line not inserted: table line number:' + str(cnt) + ' (Some val == None)'
                 p_utils.p_terminal_mssge_note_this(mssge)
-                cnt_fail += 1
+                cnt_value_fail += 1
 
     # print data_file_name, cnt, cnt_ok , cnt_fail
     msge = 'insert_data_in_db(): insert values from: >' + data_file_name + '< to database: >' + db_fn + '<.'
@@ -296,7 +299,9 @@ def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
     print msge
     p_log_this(msge)
 
-    msge = 'insert_data_in_db(): cnt, cnt_ok, cnt_fail: ' + str(cnt) + ' ' + str(cnt_ok) + ' ' + str(cnt_fail)
+    msge = 'insert_data_in_db(): cnt, cnt_ok, cnt_JSON_ok, cnt_fail, cnt_JSON_fail, cnt_value_fail = '\
+           + str(cnt) + ', ' + str(cnt_ok) + ', ' + str(cnt_JSON_ok)  + ', '\
+           + str(cnt_fail) + ', ' + str(cnt_JSON_fail) + ', ' + str(cnt_value_fail)
     print msge
     p_log_this(msge)
     return cnt, cnt_ok, cnt_fail
