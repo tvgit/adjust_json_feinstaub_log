@@ -77,8 +77,8 @@ def create_tables(fn_db):
                  "PRIMARY KEY(esp8266id, unix_time));"
         conn.executescript(schema)
         #
-        schema = "CREATE TABLE fstb_JSON(unix_time INTEGER, esp8266id STRING, sensordatavalues STRING, line_JSON STRING, line_nr INTEGER, " \
-                 "PRIMARY KEY(esp8266id, unix_time));"
+        schema = "CREATE TABLE fstb_JSON(unix_time INTEGER, station_name STRING, sensordatavalues STRING, line_JSON STRING, line_nr INTEGER, " \
+                 "PRIMARY KEY(station_name, unix_time));"
         conn.executescript(schema)
         #
         schema = """
@@ -261,7 +261,7 @@ def insert_data_in_db(table, db_fn, db_table, db_table_JSON, data_file_name):
                 # https: // stackoverflow.com / questions / 4547274 / convert - a - python - dict - to - a - string - and -back
                 # dict to str json.dumps() and str to dict json.loads()
                 sql = "INSERT INTO " + db_table_JSON
-                sql += " (unix_time, esp8266id, sensordatavalues , line_JSON, line_nr)"
+                sql += " (unix_time, station_name, sensordatavalues , line_JSON, line_nr)"
                 sql += " VALUES ('" + str(ele.unix_time) + "', '" + str(ele.esp8266id) + "', '" + \
                        json.dumps(ele.sensordatavalues) + "', '" + ele.line_JSON + "', '" + str(ele.line_nr) + "')"
                 # print sql
