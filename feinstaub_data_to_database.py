@@ -565,12 +565,12 @@ def main():
     # adjust_feinstaub_logfiles(confargs.dir)
 
     fn_db = r'feinstaub_0011.db'
-    fn_db = r'C:\tmp\sqlite\feinstaub_0011.db'
+    # fn_db = r'C:\tmp\sqlite\feinstaub_0011.db'
     fn_db = os.path.normpath(fn_db)
 
     # (make_new_db = True) => Alte Datenbank wird gelöscht und neue db frisch angelegt
-    #make_sqlite_db(fn_db = fn_db, make_new_db = False)
-    make_sqlite_db(fn_db = fn_db, make_new_db = True)
+    make_sqlite_db(fn_db = fn_db, make_new_db = False)
+    #make_sqlite_db(fn_db = fn_db, make_new_db = True)
     process_all_json_data_files(confargs.dir, fn_db)
 
     # inspire_some_file_operations()
